@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --zt-bg-base: #0A0A0C;
+  --zt-bg-panel: #111115;
+  --zt-bg-sidebar: #0E0E12;
+  --zt-bg-surface: #17171E;
+  --zt-bg-active: #1C1C24;
+  --zt-border: #2D2D3A;
+  
+  --zt-color-primary: #0076FF;
+  --zt-color-success: #10B981;
+  --zt-color-warning: #F59E0B;
+  --zt-color-danger: #EF4444;
+  
+  --zt-radius-md: 8px;
+  --zt-radius-lg: 12px;
+  --zt-radius-xl: 16px;
+  --zt-radius-2xl: 20px;
+}
+
+/* Custom polished scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #252533;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #36364a;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-spin-slow {
+  animation: spin 12s linear infinite;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "my-toolbox",
+  "description": "An adaptive, pluggable productivity launcher and tool dashboard that operates seamlessly as a browser simulation or a desktop application utilizing native Tauri APIs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
