@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0e12;
+      color: #e2e8f0;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { color: #06b6d4; font-size: 18px; }
+    p { color: #94a3b8; font-size: 13px; margin: 10px 0; }
+    button {
+      background: #06b6d4;
+      color: #0f172a;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 5px;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-red { background: #ef4444; color: #fff; }
+    #output {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      min-height: 60px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔌 My Custom Plugin</h1>
+  <p>This is a template plugin. Edit this file to create your own tool.</p>
+
+  <button id="btnAction">Run Action</button>
+  <button id="btnSave">Save to Storage</button>
+  <button id="btnLoad">Load from Storage</button>
+  <button id="btnExit" class="btn-red">Exit</button>
+
+  <div id="output">Ready.</div>
+
+  <script>
+    const output = document.getElementById('output');
+
+    // Wait for the My Toolbox bridge to be ready
+    window.onMyToolboxReady = async () => {
+      output.innerText = 'Bridge connected! Plugin is ready.';
+
+      // Example: Read from isolated storage
+      const saved = await window.myToolbox.db.get('my_data');
+      if (saved) {
+        output.innerText = 'Loaded: ' + JSON.stringify(saved);
+      }
+    };
+
+    // Example: Run an action
+    document.getElementById('btnAction').onclick = () => {
+      output.innerText = 'Action executed at ' + new Date().toLocaleTimeString();
+    };
+
+    // Example: Save to isolated storage
+    document.getElementById('btnSave').onclick = async () => {
+      const data = { timestamp: Date.now(), message: 'Hello from my plugin!' };
+      await window.myToolbox.db.put('my_data', data);
+      output.innerText = 'Saved: ' + JSON.stringify(data);
+    };
+
+    // Example: Load from isolated storage
+    document.getElementById('btnLoad').onclick = async () => {
+      const data = await window.myToolbox.db.get('my_data');
+      output.innerText = data ? 'Loaded: ' + JSON.stringify(data) : 'No data found.';
+    };
+
+    // Exit the plugin
+    document.getElementById('btnExit').onclick = () => {
+      window.myToolbox.exit();
+    };
+  </script>
+</body>
+</html>

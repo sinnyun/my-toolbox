@@ -1,0 +1,21 @@
+{
+  "id": "my-plugin-id",
+  "name": "My Plugin Name",
+  "version": "1.0.0",
+  "logo": "🔧",
+  "entryType": "webview",
+  "main": "index.html",
+  "features": [
+    {
+      "code": "my_feature_code",
+      "explain": "Description of what this feature does.",
+      "cmds": ["keyword1", "keyword2", "拼音首字母"],
+      "ui": {
+        "displayType": "button",
+        "label": "Button Label",
+        "icon": "Wrench",
+        "color": "#10b981"
+      }
+    }
+  ]
+}

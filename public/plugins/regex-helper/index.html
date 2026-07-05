@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 16px;
+      background: #0d0e12;
+      color: #e2e8f0;
+      margin: 0;
+      height: calc(100vh - 32px);
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .title { margin: 0; font-size: 14px; font-weight: 600; color: #f59e0b; }
+    .sandbox-main { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .input-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 8px; }
+    .field-group { display: flex; flex-direction: column; }
+    .field-group label { font-size: 10px; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; }
+    input, textarea {
+      background: #1e293b; border: 1px solid #334155; border-radius: 4px;
+      color: #f8fafc; padding: 8px; font-family: monospace; font-size: 11px;
+      outline: none; box-sizing: border-box;
+    }
+    input:focus, textarea:focus { border-color: #f59e0b; }
+    .presets-wrapper { background: #111827; padding: 8px; border-radius: 6px; border: 1px solid #1f2937; }
+    .presets-title { font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+    .preset-btns { display: flex; flex-wrap: wrap; gap: 5px; }
+    .preset-btn {
+      background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+      padding: 4px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;
+    }
+    .preset-btn:hover { color: #f8fafc; border-color: #f59e0b; }
+    .results-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .match-box {
+      flex: 1; background: #0b0f17; border: 1px solid #1e293b; border-radius: 6px;
+      padding: 10px; font-family: monospace; font-size: 12px; overflow-y: auto;
+      white-space: pre-wrap; box-sizing: border-box;
+    }
+    .highlight {
+      background-color: rgba(245, 158, 11, 0.3); border-bottom: 2px solid #f59e0b;
+      color: #fef08a; border-radius: 2px; padding: 1px 0;
+    }
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    button { background: #f59e0b; color: #1e293b; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
+    button:hover { opacity: 0.9; }
+    .btn-blue { background: #3b82f6; color: #fff; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .status { font-size: 10px; color: #64748b; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3 class="title">正则表达式辅助验证套件</h3>
+    <span class="status" id="readyStatus">沙箱隔离环境初始化中...</span>
+  </div>
+
+  <div class="sandbox-main">
+    <div class="input-row">
+      <div class="field-group">
+        <label>正则表达式规则 (Pattern)</label>
+        <input type="text" id="regexInput" value="\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b" placeholder="在此输入正则表达式...">
+      </div>
+      <div class="field-group">
+        <label>匹配修饰符 (Flags)</label>
+        <input type="text" id="flagsInput" value="g" placeholder="例如: g, i, m">
+      </div>
+    </div>
+
+    <div class="presets-wrapper">
+      <div class="presets-title">常用推荐正则规则</div>
+      <div class="preset-btns">
+        <button type="button" class="preset-btn" data-reg="\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b" data-flag="g">电子邮箱</button>
+        <button type="button" class="preset-btn" data-reg="^(http|https)://[^\\s/$.?#].[^\\s]*$" data-flag="g">互联网链接</button>
+        <button type="button" class="preset-btn" data-reg="\\b(19|20)\\d\\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])\\b" data-flag="g">日期格式</button>
+        <button type="button" class="preset-btn" data-reg="^[0-9]+$" data-flag="g">纯数字串</button>
+      </div>
+    </div>
+
+    <div class="field-group results-pane">
+      <label>待匹配测试源文本</label>
+      <textarea id="textSubject" style="height: 60px; margin-bottom: 6px;" placeholder="在此输入需要验证或提取的原始文本内容...">欢迎联系我们！支持邮箱 support@my-toolbox.app，商务合作 sales-team@my-toolbox.org，期待与您的交流！</textarea>
+      <label>高亮捕获匹配结果</label>
+      <div id="matchOutput" class="match-box"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button id="btnSave" class="btn-blue">保存规则到沙箱</button>
+    <button id="btnPush">广播当前正则到剪贴板</button>
+    <button id="btnExit" class="btn-red">退出沙箱</button>
+  </div>
+
+  <script>
+    const regexIn = document.getElementById('regexInput');
+    const flagsIn = document.getElementById('flagsInput');
+    const subjectIn = document.getElementById('textSubject');
+    const outputBox = document.getElementById('matchOutput');
+    const statusLbl = document.getElementById('readyStatus');
+
+    window.onMyToolboxReady = async () => {
+      statusLbl.innerText = "PRELOAD ACTIVE | 正在连接独立 Sled 数据库...";
+      const savedPattern = await window.myToolbox.db.get('custom_pattern');
+      const savedFlags = await window.myToolbox.db.get('custom_flags');
+      if (savedPattern) {
+        regexIn.value = savedPattern;
+        flagsIn.value = savedFlags || "g";
+      }
+      runTest();
+      statusLbl.innerText = "沙箱参数加载完毕。数据库强防篡改保护生效。";
+    };
+
+    const runTest = () => {
+      try {
+        const pattern = regexIn.value;
+        const flags = flagsIn.value;
+        const subject = subjectIn.value;
+        if (!pattern || !subject) { outputBox.innerText = subject; return; }
+        const re = new RegExp(pattern, flags);
+        if (!flags.includes('g')) {
+          const match = subject.match(re);
+          if (match) {
+            const idx = match.index;
+            outputBox.innerHTML = escapeHtml(subject.slice(0, idx)) + '<span class="highlight">' + escapeHtml(match[0]) + '</span>' + escapeHtml(subject.slice(idx + match[0].length));
+          } else {
+            outputBox.innerText = subject;
+          }
+        } else {
+          let formatted = "", lastIdx = 0, match;
+          re.lastIndex = 0;
+          let preventInfinite = 0;
+          while ((match = re.exec(subject)) !== null) {
+            if (match.index === re.lastIndex) re.lastIndex++;
+            formatted += escapeHtml(subject.slice(lastIdx, match.index)) + '<span class="highlight">' + escapeHtml(match[0]) + '</span>';
+            lastIdx = re.lastIndex || (match.index + match[0].length);
+            if (++preventInfinite > 500) break;
+          }
+          formatted += escapeHtml(subject.slice(lastIdx));
+          outputBox.innerHTML = formatted;
+        }
+      } catch (err) {
+        outputBox.innerHTML = '<span style="color:#ef4444">' + escapeHtml(err.message) + '</span>';
+      }
+    };
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    regexIn.oninput = runTest;
+    flagsIn.oninput = runTest;
+    subjectIn.oninput = runTest;
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.onclick = () => {
+        regexIn.value = btn.getAttribute('data-reg');
+        flagsIn.value = btn.getAttribute('data-flag');
+        runTest();
+      };
+    });
+
+    document.getElementById('btnSave').onclick = async () => {
+      await window.myToolbox.db.put('custom_pattern', regexIn.value);
+      await window.myToolbox.db.put('custom_flags', flagsIn.value);
+      statusLbl.innerText = "✓ 配置已成功隔离存储至 Sled 隔离空间！";
+    };
+
+    document.getElementById('btnPush').onclick = () => {
+      window.myToolbox.publish('clipboard_update', { text: regexIn.value });
+      statusLbl.innerText = "🔊 已成功将正则表达式通过事件总线复制并同步至宿主剪贴板。";
+    };
+
+    document.getElementById('btnExit').onclick = () => {
+      window.myToolbox.exit();
+    };
+  </script>
+</body>
+</html>

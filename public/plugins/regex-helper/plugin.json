@@ -1,0 +1,21 @@
+{
+  "id": "my-toolbox-regex-helper",
+  "name": "Regex Sandbox",
+  "version": "1.0.0",
+  "logo": "🔍",
+  "entryType": "webview",
+  "main": "index.html",
+  "features": [
+    {
+      "code": "regex_page",
+      "explain": "Test, generate, and store commonly used regex equations.",
+      "cmds": ["regex", "test", "helper", "正则", "zz"],
+      "ui": {
+        "displayType": "button",
+        "label": "Regex Tester",
+        "icon": "FileSearch",
+        "color": "#f59e0b"
+      }
+    }
+  ]
+}

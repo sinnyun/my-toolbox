@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { sysInvoke } from "../services/bridge";
+import { sysInvoke, isTauri } from "../services/bridge";
 import { hostEventBus } from "../services/eventBus";
 import { Plugin } from "../types/plugin";
 import {
-  Settings, Puzzle, Database, Trash2, Plus, RefreshCw,
-  Monitor, Palette, Bell, Shield, Info
+  Settings, Puzzle, Database, Trash2, RefreshCw, Palette, Info
 } from "lucide-react";
 
 interface SettingsPageProps {
@@ -24,16 +23,13 @@ export default function SettingsPage({ plugins }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<SettingsSection>("plugins");
   const [dbKeys, setDbKeys] = useState<{ pluginId: string; key: string; value: string }[]>([]);
 
-  const refreshDbKeys = () => {
-    const keys: { pluginId: string; key: string; value: string }[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const storageKey = localStorage.key(i);
-      if (storageKey?.startsWith("plugin_isolated:")) {
-        const parts = storageKey.split(":");
-        keys.push({ pluginId: parts[1], key: parts.slice(2).join(":"), value: localStorage.getItem(storageKey) || "" });
-      }
+  const refreshDbKeys = async () => {
+    try {
+      const result = await sysInvoke("list_db_keys");
+      if (Array.isArray(result)) setDbKeys(result);
+    } catch (err) {
+      console.error("Failed to list db keys:", err);
     }
-    setDbKeys(keys);
   };
 
   useEffect(() => { refreshDbKeys(); }, []);
@@ -50,7 +46,6 @@ export default function SettingsPage({ plugins }: SettingsPageProps) {
 
   return (
     <div className="flex-1 flex gap-4 min-h-0">
-      {/* 左侧边栏 */}
       <div className="w-52 bg-[#121218]/95 backdrop-blur-xl rounded-2xl border border-[#2D2D3D] p-3 flex flex-col shrink-0">
         <div className="px-3 py-2 mb-2">
           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
@@ -76,7 +71,6 @@ export default function SettingsPage({ plugins }: SettingsPageProps) {
         </nav>
       </div>
 
-      {/* 右侧内容 */}
       <div className="flex-1 bg-[#121218]/95 backdrop-blur-xl rounded-2xl border border-[#2D2D3D] p-5 overflow-y-auto min-h-0">
         {activeSection === "plugins" && (
           <div className="space-y-4">
@@ -178,16 +172,16 @@ export default function SettingsPage({ plugins }: SettingsPageProps) {
             <h2 className="text-base font-semibold text-white mb-4">关于 My Toolbox</h2>
             <div className="bg-[#181822] border border-[#2D2D3D] rounded-xl p-5 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0076FF] to-[#3b82f6] flex items-center justify-center text-white font-bold text-xl shadow-lg">Z</div>
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#0076FF] to-[#3b82f6] flex items-center justify-center text-white font-bold text-xl shadow-lg">M</div>
                 <div>
                   <div className="text-base font-semibold text-white">My Toolbox Desktop</div>
                   <div className="text-xs text-gray-400">v0.1.0 · 高保真桌面工具箱</div>
                 </div>
               </div>
               <div className="border-t border-[#2D2D3D] pt-4 text-xs text-gray-400 leading-relaxed space-y-2">
-                <p>My Toolbox 是一个受 uTools 启发的高保真桌面工具箱平台，支持多沙箱隔离运行、动态插件热插拔、以及浏览器/桌面双核适配。</p>
+                <p>My Toolbox 是一个受 uTools 启发的高保真桌面工具箱平台，支持多沙箱隔离运行、动态插件热插拔。</p>
                 <p><strong className="text-gray-300">技术栈:</strong> React + TypeScript + Vite + Tauri v2 + Tailwind CSS</p>
-                <p><strong className="text-gray-300">运行模式:</strong> {isTauri() ? "Tauri 原生桌面环境" : "浏览器模拟环境 (Mock IPC)"}</p>
+                <p><strong className="text-gray-300">运行环境:</strong> Tauri 原生桌面 (Rust 后端)</p>
               </div>
             </div>
           </div>
@@ -195,8 +189,4 @@ export default function SettingsPage({ plugins }: SettingsPageProps) {
       </div>
     </div>
   );
-}
-
-function isTauri() {
-  return typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
 }

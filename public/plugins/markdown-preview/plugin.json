@@ -1,0 +1,21 @@
+{
+  "id": "my-toolbox-markdown-preview",
+  "name": "Markdown Preview",
+  "version": "1.0.0",
+  "logo": "📝",
+  "entryType": "webview",
+  "main": "index.html",
+  "features": [
+    {
+      "code": "markdown_page",
+      "explain": "Real-time Markdown editor with live HTML preview.",
+      "cmds": ["markdown", "md", "preview", "markdown预览"],
+      "ui": {
+        "displayType": "button",
+        "label": "Markdown Preview",
+        "icon": "FileText",
+        "color": "#06b6d4"
+      }
+    }
+  ]
+}

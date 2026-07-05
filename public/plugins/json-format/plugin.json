@@ -1,0 +1,21 @@
+{
+  "id": "my-toolbox-json-format",
+  "name": "JSON Formatter",
+  "version": "1.2.0",
+  "logo": "📦",
+  "entryType": "webview",
+  "main": "index.html",
+  "features": [
+    {
+      "code": "format_page",
+      "explain": "Launch the JSON formatter, beautifier, and validation suite.",
+      "cmds": ["json", "format", "beautify", "格式化", "gsh"],
+      "ui": {
+        "displayType": "button",
+        "label": "JSON Formatter",
+        "icon": "Code2",
+        "color": "#3b82f6"
+      }
+    }
+  ]
+}

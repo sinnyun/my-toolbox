@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
-import { sysInvoke, isTauri } from "./services/bridge";
+import React, { useState, useEffect } from "react";
+import { sysInvoke } from "./services/bridge";
 import { hostEventBus } from "./services/eventBus";
 import HomePage from "./pages/HomePage";
 import SettingsPage from "./pages/SettingsPage";
 import DebugPage from "./pages/DebugPage";
-import BottomNav from "./components/BottomNav";
+import TopNav from "./components/TopNav";
 import PinyinMatch from "pinyin-match";
 import { Plugin, PluginFeature } from "./types/plugin";
-import { subscribeToIpcLogs, IpcCallLog } from "./mocks/tauriMock";
+import { subscribeIpcLogs, IpcLog } from "./services/ipcLogger";
 
 export type PageId = "home" | "settings" | "debug";
 
@@ -16,9 +16,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [searchResults, setSearchResults] = useState<{ plugin: Plugin; feature: PluginFeature }[]>([]);
-  const [activePlugin, setActivePlugin] = useState<Plugin | null>(null);
-  const [activeFeature, setActiveFeature] = useState<PluginFeature | null>(null);
-  const [ipcLogs, setIpcLogs] = useState<IpcCallLog[]>([]);
+  const [ipcLogs, setIpcLogs] = useState<IpcLog[]>([]);
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
 
@@ -32,7 +30,7 @@ export default function App() {
     loadPlugins();
     hostEventBus.subscribe("plugin_registry_updated", loadPlugins);
 
-    const unsubscribeLogs = subscribeToIpcLogs((logs) => setIpcLogs(logs));
+    const unsubscribeLogs = subscribeIpcLogs((logs) => setIpcLogs(logs));
 
     const updateTime = () => {
       const now = new Date();
@@ -69,14 +67,29 @@ export default function App() {
   }, [query, plugins]);
 
   const handleRunFeature = (plugin: Plugin, feature: PluginFeature) => {
-    setActivePlugin(plugin);
-    setActiveFeature(feature);
+    if (plugin.entryType === "webview") {
+      // Open plugin in a new Tauri window
+      openPluginWindow(plugin);
+    }
     setQuery("");
   };
 
-  const handleExitPlugin = () => {
-    setActivePlugin(null);
-    setActiveFeature(null);
+  const openPluginWindow = async (plugin: Plugin) => {
+    // Extract relative path: "E:/.../public/plugins/xxx/index.html" -> "plugins/xxx/index.html"
+    let relPath = plugin.main;
+    const publicIdx = relPath.indexOf("/public/");
+    if (publicIdx !== -1) {
+      relPath = relPath.substring(publicIdx + 8);
+    }
+    try {
+      await sysInvoke("open_plugin_window", {
+        pluginId: plugin.id,
+        title: plugin.name,
+        url: `http://localhost:3000/${relPath}`
+      });
+    } catch (err) {
+      console.error("Failed to open plugin window:", err);
+    }
   };
 
   return (
@@ -85,9 +98,10 @@ export default function App() {
       <div className="absolute bottom-[-20%] right-[10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none"></div>
 
       <header className="w-full max-w-4xl mx-auto flex items-center justify-between px-6 pt-4 pb-2 text-xs font-mono text-gray-500 z-10">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
           <span className="text-gray-400 font-medium">My Toolbox</span>
+          <TopNav currentPage={currentPage} onNavigate={setCurrentPage} />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-gray-500">{currentDate}</span>
@@ -102,10 +116,7 @@ export default function App() {
             setQuery={setQuery}
             plugins={plugins}
             searchResults={searchResults}
-            activePlugin={activePlugin}
-            activeFeature={activeFeature}
             onRunFeature={handleRunFeature}
-            onExitPlugin={handleExitPlugin}
           />
         )}
         {currentPage === "settings" && (
@@ -115,8 +126,6 @@ export default function App() {
           <DebugPage ipcLogs={ipcLogs} />
         )}
       </main>
-
-      <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} />
     </div>
   );
 }

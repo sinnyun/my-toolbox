@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d0e12;
+      color: #e2e8f0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e293b;
+      background: #0f1015;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #06b6d4;
+    }
+    .tag {
+      font-size: 10px;
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: #22d3ee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 0;
+    }
+    .pane {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #1e293b;
+    }
+    .pane:last-child { border-right: none; }
+    .pane-header {
+      font-size: 11px;
+      color: #64748b;
+      padding: 8px 12px;
+      border-bottom: 1px solid #1e293b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #0f1015;
+    }
+    #editor {
+      flex: 1;
+      background: #111827;
+      border: none;
+      color: #f1f5f9;
+      padding: 12px;
+      font-family: "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+    #editor:focus { background: #1a1f2e; }
+    #preview {
+      flex: 1;
+      padding: 16px 20px;
+      overflow-y: auto;
+      background: #111827;
+      line-height: 1.7;
+    }
+    /* Markdown rendered styles */
+    #preview h1 { font-size: 1.6em; color: #f1f5f9; margin: 0.5em 0; border-bottom: 1px solid #1e293b; padding-bottom: 0.3em; }
+    #preview h2 { font-size: 1.3em; color: #e2e8f0; margin: 0.5em 0; border-bottom: 1px solid #1e293b; padding-bottom: 0.2em; }
+    #preview h3 { font-size: 1.1em; color: #cbd5e1; margin: 0.5em 0; }
+    #preview p { margin: 0.6em 0; color: #cbd5e1; }
+    #preview code {
+      background: #1e293b;
+      color: #22d3ee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "Fira Code", monospace;
+      font-size: 0.9em;
+    }
+    #preview pre {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 0.8em 0;
+    }
+    #preview pre code { background: none; padding: 0; color: #e2e8f0; }
+    #preview blockquote {
+      border-left: 3px solid #06b6d4;
+      padding-left: 12px;
+      color: #94a3b8;
+      margin: 0.6em 0;
+    }
+    #preview ul, #preview ol { padding-left: 1.5em; margin: 0.5em 0; color: #cbd5e1; }
+    #preview li { margin: 0.2em 0; }
+    #preview a { color: #06b6d4; text-decoration: none; }
+    #preview a:hover { text-decoration: underline; }
+    #preview strong { color: #f1f5f9; }
+    #preview em { color: #a5b4fc; }
+    #preview table { border-collapse: collapse; margin: 0.8em 0; width: 100%; }
+    #preview th, #preview td { border: 1px solid #1e293b; padding: 6px 10px; text-align: left; }
+    #preview th { background: #1e293b; color: #e2e8f0; }
+    #preview hr { border: none; border-top: 1px solid #1e293b; margin: 1em 0; }
+    .btn-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-top: 1px solid #1e293b;
+      background: #0f1015;
+    }
+    button {
+      background: #06b6d4;
+      color: #0f172a;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    button:hover { opacity: 0.9; }
+    .btn-gray { background: #374151; color: #d1d5db; }
+    .btn-green { background: #10b981; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-purple { background: #8b5cf6; color: #fff; }
+    .status {
+      font-size: 10px;
+      color: #64748b;
+      padding: 6px 16px;
+      background: #0f1015;
+      border-top: 1px solid #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3 class="title">Markdown 实时预览编辑器</h3>
+    <span class="tag">sandbox-iframe</span>
+  </div>
+
+  <div class="main">
+    <div class="pane">
+      <div class="pane-header">Markdown 源码</div>
+      <textarea id="editor" placeholder="在此输入 Markdown 内容..."></textarea>
+    </div>
+    <div class="pane">
+      <div class="pane-header">渲染预览</div>
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <div class="btn-bar">
+    <button id="btnSave" class="btn-green">保存到沙箱</button>
+    <button id="btnLoad">加载上次保存</button>
+    <button id="btnCopy" class="btn-purple">复制 HTML</button>
+    <button id="btnClear" class="btn-gray">清空</button>
+    <button id="btnExit" class="btn-red">退出</button>
+  </div>
+
+  <div id="status" class="status">沙箱初始化中...</div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+    const status = document.getElementById('status');
+
+    // Simple Markdown parser (no dependencies)
+    function parseMd(text) {
+      if (!text) return '';
+      let html = text
+        // Code blocks
+        .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+        // Inline code
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // Headers
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        // Bold and italic
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        // Blockquote
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        // Horizontal rule
+        .replace(/^---$/gm, '<hr>')
+        // Unordered list
+        .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+        // Images
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%">')
+        // Line breaks (paragraphs)
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+
+      // Wrap in paragraphs
+      html = '<p>' + html + '</p>';
+
+      // Clean up empty paragraphs and fix list wrapping
+      html = html
+        .replace(/<p><\/p>/g, '')
+        .replace(/<p>(<h[1-3]>)/g, '$1')
+        .replace(/(<\/h[1-3]>)<\/p>/g, '$1')
+        .replace(/<p>(<pre>)/g, '$1')
+        .replace(/(<\/pre>)<\/p>/g, '$1')
+        .replace(/<p>(<blockquote>)/g, '$1')
+        .replace(/(<\/blockquote>)<\/p>/g, '$1')
+        .replace(/<p>(<hr>)<\/p>/g, '$1')
+        .replace(/<p>(<li>)/g, '<ul>$1')
+        .replace(/(<\/li>)<\/p>/g, '$1</ul>')
+        .replace(/<\/ul>\s*<ul>/g, '');
+
+      return html;
+    }
+
+    // Render on input
+    editor.addEventListener('input', () => {
+      preview.innerHTML = parseMd(editor.value);
+    });
+
+    // Bridge ready
+    window.onMyToolboxReady = async () => {
+      status.innerText = 'Bridge connected. Loading saved state...';
+      const saved = await window.myToolbox.db.get('last_markdown');
+      if (saved) {
+        editor.value = saved;
+        preview.innerHTML = parseMd(saved);
+        status.innerText = 'Restored from sandbox storage.';
+      } else {
+        editor.value = '# Hello Markdown\n\nThis is a **live preview** editor.\n\n## Features\n\n- Real-time rendering\n- Isolated sandbox storage\n- Copy HTML output\n\n```js\nconsole.log("Hello from My Toolbox!");\n```\n\n> Built with the My Toolbox plugin system.';
+        preview.innerHTML = parseMd(editor.value);
+        status.innerText = 'Loaded default content.';
+      }
+    };
+
+    // Save to sandbox
+    document.getElementById('btnSave').onclick = async () => {
+      await window.myToolbox.db.put('last_markdown', editor.value);
+      status.innerText = 'Saved to sandbox storage.';
+    };
+
+    // Load from sandbox
+    document.getElementById('btnLoad').onclick = async () => {
+      const saved = await window.myToolbox.db.get('last_markdown');
+      if (saved) {
+        editor.value = saved;
+        preview.innerHTML = parseMd(saved);
+        status.innerText = 'Loaded from sandbox storage.';
+      } else {
+        status.innerText = 'No saved content found.';
+      }
+    };
+
+    // Copy HTML to clipboard
+    document.getElementById('btnCopy').onclick = () => {
+      window.myToolbox.publish('clipboard_update', { text: preview.innerHTML });
+      status.innerText = 'HTML copied to clipboard via event bus.';
+    };
+
+    // Clear
+    document.getElementById('btnClear').onclick = () => {
+      editor.value = '';
+      preview.innerHTML = '';
+      status.innerText = 'Editor cleared.';
+    };
+
+    // Exit
+    document.getElementById('btnExit').onclick = () => {
+      window.myToolbox.exit();
+    };
+  </script>
+</body>
+</html>

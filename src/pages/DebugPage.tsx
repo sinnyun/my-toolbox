@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { IpcCallLog } from "../mocks/tauriMock";
+import { IpcLog } from "../services/ipcLogger";
 import { Terminal, Filter, RefreshCw, CheckCircle, XCircle, Trash2 } from "lucide-react";
 
 interface DebugPageProps {
-  ipcLogs: IpcCallLog[];
+  ipcLogs: IpcLog[];
 }
 
 type LogFilter = "all" | "success" | "error";
